@@ -38,6 +38,31 @@ app.use(express.json({ extended: false }));
 // ==================== Routes ====================
 
 /**
+ * Root Endpoint
+ * Returns API information and available endpoints
+ * 
+ * @route GET /
+ * @returns {Object} API information and available endpoints
+ */
+app.get('/', (req, res) => {
+  res.status(200).json({
+    message: 'Sync Backend API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      health: '/health',
+      auth: {
+        signup: 'POST /api/auth/signup',
+        signin: 'POST /api/auth/signin',
+        google: 'POST /api/auth/google',
+        profile: 'GET /api/auth/profile (Protected)'
+      }
+    },
+    documentation: 'See README.md for detailed API documentation'
+  });
+});
+
+/**
  * Health Check Endpoint
  * Used to verify that the API is running and accessible
  * Useful for monitoring and deployment verification
