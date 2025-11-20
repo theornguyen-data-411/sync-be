@@ -322,5 +322,4 @@ ISC
 
 ## 👤 Author
 
-Your Name
-
+Theorng
