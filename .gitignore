@@ -1,0 +1,17 @@
+# Bỏ qua thư mục thư viện (Rất nặng)
+node_modules/
+
+# Bỏ qua file chứa bí mật (QUAN TRỌNG NHẤT)
+.env
+
+# Bỏ qua file rác của hệ điều hành Mac
+.DS_Store
+.vscode/
+
+# Bỏ qua các file log lỗi
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Bỏ qua thư mục coverage nếu test
+coverage/
