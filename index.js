@@ -81,6 +81,25 @@ app.get('/health', (req, res) => {
  */
 app.use('/api/auth', authRoutes);
 
+/**
+ * 404 Handler for undefined routes
+ * Returns a helpful error message for routes that don't exist
+ */
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Route not found',
+    message: `Cannot ${req.method} ${req.path}`,
+    availableEndpoints: {
+      root: 'GET /',
+      health: 'GET /health',
+      signup: 'POST /api/auth/signup',
+      signin: 'POST /api/auth/signin',
+      google: 'POST /api/auth/google',
+      profile: 'GET /api/auth/profile (Protected)'
+    }
+  });
+});
+
 // ==================== Server Configuration ====================
 
 /**
