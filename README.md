@@ -136,11 +136,51 @@ Trong Render Dashboard, vào tab **Environment** và thêm các biến sau:
    ```
    Kết quả mong đợi: `{"status":"OK","message":"API is running"}`
 
-2. **Test signup endpoint:**
+2. **Test Sign Up (Đăng ký):**
    ```bash
    curl -X POST https://sync-be-api.onrender.com/api/auth/signup \
      -H "Content-Type: application/json" \
      -d '{"email":"test@example.com","password":"123456"}'
+   ```
+   Kết quả mong đợi: `{"msg":"User registered successfully"}`
+
+3. **Test Sign In (Đăng nhập):**
+   ```bash
+   curl -X POST https://sync-be-api.onrender.com/api/auth/signin \
+     -H "Content-Type: application/json" \
+     -d '{"email":"test@example.com","password":"123456"}'
+   ```
+   Kết quả mong đợi: 
+   ```json
+   {
+     "message": "Login successful",
+     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+     "user": {
+       "id": "user_id",
+       "email": "test@example.com",
+       "fullName": null
+     }
+   }
+   ```
+   **Lưu ý:** Lưu lại `token` từ response để dùng cho API Get Profile
+
+4. **Test Get Profile (Lấy thông tin user):**
+   ```bash
+   curl -X GET https://sync-be-api.onrender.com/api/auth/profile \
+     -H "Authorization: Bearer YOUR_TOKEN_HERE"
+   ```
+   Thay `YOUR_TOKEN_HERE` bằng token nhận được từ Sign In.
+   
+   Kết quả mong đợi:
+   ```json
+   {
+     "_id": "user_id",
+     "email": "test@example.com",
+     "fullName": null,
+     "authType": "local",
+     "createdAt": "2024-01-01T00:00:00.000Z",
+     "updatedAt": "2024-01-01T00:00:00.000Z"
+   }
    ```
 
 ## 🔐 Environment Variables
