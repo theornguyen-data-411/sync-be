@@ -45,8 +45,8 @@ exports.signup = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create new user instance
-        const newUser = new User({ 
-            email, 
+        const newUser = new User({
+            email,
             password: hashedPassword,
             authType: 'local'
         });
@@ -91,8 +91,8 @@ exports.signin = async (req, res) => {
         // Generate JWT token
         // Token contains user ID and expires in 7 days
         const token = jwt.sign(
-            { userId: user._id }, 
-            process.env.JWT_SECRET, 
+            { userId: user._id },
+            process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
@@ -100,10 +100,10 @@ exports.signin = async (req, res) => {
         res.json({
             message: "Login successful",
             token,
-            user: { 
-                id: user._id, 
-                email: user.email, 
-                fullName: user.fullName 
+            user: {
+                id: user._id,
+                email: user.email,
+                fullName: user.fullName
             }
         });
     } catch (error) {
@@ -127,12 +127,41 @@ exports.getProfile = async (req, res) => {
         // Find user by ID from JWT token
         // .select('-password') excludes password field from response
         const user = await User.findById(req.userId).select('-password');
-        
+
         if (!user) {
             return res.status(404).json({ message: "User does not exist" });
         }
-        
+
         res.json(user);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * User Logout Controller
+ * 
+ * Logs out the current authenticated user.
+ * Since JWT is stateless, logout is handled client-side by removing the token.
+ * This endpoint provides a way to confirm logout on the server side.
+ * 
+ * @route POST /api/auth/logout
+ * @access Private (requires JWT token)
+ * @param {string} req.userId - User ID from JWT token (set by authMiddleware)
+ * @returns {Object} Success message
+ */
+exports.logout = async (req, res) => {
+    try {
+        // Verify user exists
+        const user = await User.findById(req.userId);
+
+        if (!user) {
+            return res.status(404).json({ message: "User does not exist" });
+        }
+
+        // Return success message
+        // Client should remove the token from storage after receiving this response
+        res.json({ message: "Logout successful" });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -159,9 +188,9 @@ exports.googleSignin = async (req, res) => {
         // This ensures the token is valid and not tampered with
         const ticket = await client.verifyIdToken({
             idToken: idToken,
-            audience: process.env.GOOGLE_CLIENT_ID, 
+            audience: process.env.GOOGLE_CLIENT_ID,
         });
-        
+
         // Extract user information from verified token
         const payload = ticket.getPayload();
         // payload contains: { email, name, picture, sub (googleId), ... }
@@ -203,8 +232,8 @@ exports.googleSignin = async (req, res) => {
         // Step 4: Generate JWT token (same as regular login)
         // This allows the user to access protected routes
         const token = jwt.sign(
-            { userId: user._id }, 
-            process.env.JWT_SECRET, 
+            { userId: user._id },
+            process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
@@ -212,11 +241,11 @@ exports.googleSignin = async (req, res) => {
         res.json({
             message: "Google Login successful",
             token,
-            user: { 
-                id: user._id, 
-                email: user.email, 
-                fullName: user.fullName, 
-                avatarUrl: user.avatarUrl 
+            user: {
+                id: user._id,
+                email: user.email,
+                fullName: user.fullName,
+                avatarUrl: user.avatarUrl
             }
         });
 

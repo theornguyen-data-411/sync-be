@@ -23,5 +23,12 @@ curl -X GET https://sync-be-api.onrender.com/api/auth/profile \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
+## 4. Logout (Đăng xuất)
+
+```bash
+curl -X POST https://sync-be-api.onrender.com/api/auth/logout \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
 **Lưu ý:** Thay `YOUR_TOKEN_HERE` bằng token nhận được từ Sign In.
 

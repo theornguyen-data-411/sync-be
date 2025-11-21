@@ -55,4 +55,14 @@ router.post('/google', authController.googleSignin);
  */
 router.get('/profile', authMiddleware, authController.getProfile);
 
+/**
+ * User Logout Endpoint
+ * 
+ * @route POST /api/auth/logout
+ * @access Private (requires JWT token)
+ * @middleware authMiddleware - Validates JWT token
+ * @returns {Object} Success message
+ */
+router.post('/logout', authMiddleware, authController.logout);
+
 module.exports = router;
