@@ -32,3 +32,77 @@ curl -X POST https://sync-be-api.onrender.com/api/auth/logout \
 
 **Lưu ý:** Thay `YOUR_TOKEN_HERE` bằng token nhận được từ Sign In.
 
+---
+
+## 5. Create Task (AI scoring + tag AI optional)
+
+```bash
+curl -X POST https://sync-be-api.onrender.com/api/tasks \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "description":"Prepare quarterly finance report",
+        "aiSchedule":true,
+        "date":"2025-01-01",
+        "startTime":"09:00",
+        "endTime":"11:00",
+        "tag":"deep_work",
+        "useAiTagging":false,
+        "note":"Need draft for leadership sync",
+        "subtasks":[
+          {"title":"Collect data"},
+          {"title":"Create slides"}
+        ]
+      }'
+```
+
+## 6. List Tasks (Filter by zone/date/tag)
+
+```bash
+curl "https://sync-be-api.onrender.com/api/tasks?energyZone=Peak&tag=deep_work&date=2025-01-01" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+## 7. Get Task Detail
+
+```bash
+curl https://sync-be-api.onrender.com/api/tasks/TASK_ID \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+## 8. Update Task (Force AI recalculation)
+
+```bash
+curl -X PUT https://sync-be-api.onrender.com/api/tasks/TASK_ID \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "description":"Finalize finance report",
+        "useAiScoring":true,
+        "useAiTagging":true,
+        "status":"in_progress"
+      }'
+```
+
+## 9. Delete Task
+
+```bash
+curl -X DELETE https://sync-be-api.onrender.com/api/tasks/TASK_ID \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+## 10. AI Preview (Không lưu DB)
+
+```bash
+curl -X POST https://sync-be-api.onrender.com/api/tasks/ai/preview \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "description":"Deep work on product strategy",
+        "focusLevel":"high",
+        "movement":"low",
+        "useAiTagging":true
+      }'
+```
+
+

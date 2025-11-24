@@ -1,6 +1,5 @@
 /**
  * Application Entry Point
- * 
  * Main server file that initializes Express application,
  * connects to MongoDB, and sets up routes and middleware.
  */
@@ -12,6 +11,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
+const taskRoutes = require('./routes/taskRoutes');
 
 // Initialize Express application
 const app = express();
@@ -56,6 +56,14 @@ app.get('/', (req, res) => {
         signin: 'POST /api/auth/signin',
         google: 'POST /api/auth/google',
         profile: 'GET /api/auth/profile (Protected)'
+      },
+      tasks: {
+        create: 'POST /api/tasks',
+        list: 'GET /api/tasks',
+        detail: 'GET /api/tasks/:id',
+        update: 'PUT /api/tasks/:id',
+        remove: 'DELETE /api/tasks/:id',
+        aiPreview: 'POST /api/tasks/ai/preview'
       }
     },
     documentation: 'See README.md for detailed API documentation'
@@ -80,6 +88,7 @@ app.get('/health', (req, res) => {
  * Includes: signup, signin, google OAuth, and profile
  */
 app.use('/api/auth', authRoutes);
+app.use('/api/tasks', taskRoutes);
 
 /**
  * 404 Handler for undefined routes
@@ -96,6 +105,14 @@ app.use((req, res) => {
       signin: 'POST /api/auth/signin',
       google: 'POST /api/auth/google',
       profile: 'GET /api/auth/profile (Protected)'
+    },
+    tasks: {
+      create: 'POST /api/tasks',
+      list: 'GET /api/tasks',
+      detail: 'GET /api/tasks/:id',
+      update: 'PUT /api/tasks/:id',
+      remove: 'DELETE /api/tasks/:id',
+      aiPreview: 'POST /api/tasks/ai/preview'
     }
   });
 });
