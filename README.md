@@ -399,6 +399,17 @@ Cho phép client gửi description + các tiêu chí hiện tại để nhận v
 
 - Response bao gồm `tag` và `tagSource` tương tự API tạo/cập nhật task.
 
+## ✅ Tests
+
+- Chạy toàn bộ test (sử dụng Jest + Supertest + MongoDB in-memory):
+  ```bash
+  npm test
+  ```
+- Bộ test hiện tại (xem `tests/taskRoutes.test.js`) cover:
+  - Tạo task với AI scoring/tagging.
+  - Lấy danh sách task có filter tag.
+  - Gọi `/api/tasks/ai/preview` và kiểm tra kết quả Raw/Mana/Zone + tag.
+
 ## 🛠️ Development
 
 ### Scripts

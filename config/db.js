@@ -21,9 +21,9 @@ const mongoose = require('mongoose');
  * // In index.js
  * connectDB(); // Will connect using process.env.MONGO_URI
  */
-const connectDB = async () => {
-    // Get MongoDB connection string from environment variables
-    const uri = process.env.MONGO_URI;
+const connectDB = async (customUri) => {
+    // Get MongoDB connection string from parameter or environment variables
+    const uri = customUri || process.env.MONGO_URI;
     
     // Validate that MONGO_URI is provided
     if (!uri) {
@@ -39,8 +39,8 @@ const connectDB = async () => {
     } catch (error) {
         // Log error and exit application if connection fails
         // This prevents the app from running without database access
-        console.log('Error in DB connection: ' + error);
-        process.exit(1);
+        console.error('Error in DB connection: ' + error);
+        throw error;
     }
 };
 
