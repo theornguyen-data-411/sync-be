@@ -299,7 +299,8 @@ Authorization: Bearer <token>
   - `>= 70` → **Peak Zone**
   - `40 - 69` → **Balance Zone**
   - `< 40` → **Low Zone**
-- Danh sách task được sort theo Zone (Peak → Balance → Low) và Mana giảm dần trong cùng một Zone.
+- Task có `aiSchedule=true` sẽ được backend auto-sort theo Zone (Peak → Balance → Low) rồi Mana giảm dần trong từng Zone.
+- Task có `aiSchedule=false` được trả về sau cùng theo thứ tự tạo (để user tự drag/drop phía client).
 - Nếu `aiSchedule` bật (default), backend sẽ tự suy luận các tiêu chí từ description bằng heuristic AI; user vẫn có thể override bất kỳ tiêu chí nào và gọi lại AI khi cần.
 
 ### Work Tags (AI gợi ý hoặc user chọn)

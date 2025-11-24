@@ -155,8 +155,20 @@ exports.listTasks = async (req, res) => {
             }
         }
 
-        const tasks = await Task.find(filter);
-        tasks.sort((a, b) => {
+    const tasks = await Task.find(filter);
+
+    const autoTasks = [];
+    const manualTasks = [];
+
+    for (const task of tasks) {
+      if (task.aiSchedule) {
+        autoTasks.push(task);
+      } else {
+        manualTasks.push(task);
+      }
+    }
+
+    autoTasks.sort((a, b) => {
             const zoneDiff =
                 (ZONE_SORT_WEIGHT[a.energyZone] ?? 99) -
                 (ZONE_SORT_WEIGHT[b.energyZone] ?? 99);
@@ -168,7 +180,11 @@ exports.listTasks = async (req, res) => {
             return b.updatedAt.getTime() - a.updatedAt.getTime();
         });
 
-        res.json({ items: tasks, count: tasks.length });
+    manualTasks.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+    const merged = [...autoTasks, ...manualTasks];
+
+    res.json({ items: merged, count: merged.length });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

@@ -56,12 +56,16 @@ curl -X POST https://sync-be-api.onrender.com/api/tasks \
       }'
 ```
 
-## 6. List Tasks (Filter by zone/date/tag)
+## 6. List Tasks (Filter + hiểu rõ aiSchedule)
 
 ```bash
 curl "https://sync-be-api.onrender.com/api/tasks?energyZone=Peak&tag=deep_work&date=2025-01-01" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
+
+- Response có 2 nhóm:
+  - Task `aiSchedule=true`: đứng ở đầu list và đã được backend sort theo Zone → Mana → Date.
+  - Task `aiSchedule=false`: nằm cuối list theo thứ tự tạo để FE tự drag/drop.
 
 ## 7. Get Task Detail
 
@@ -80,7 +84,8 @@ curl -X PUT https://sync-be-api.onrender.com/api/tasks/TASK_ID \
         "description":"Finalize finance report",
         "useAiScoring":true,
         "useAiTagging":true,
-        "status":"in_progress"
+        "status":"in_progress",
+        "aiSchedule":true
       }'
 ```
 
@@ -101,7 +106,8 @@ curl -X POST https://sync-be-api.onrender.com/api/tasks/ai/preview \
         "description":"Deep work on product strategy",
         "focusLevel":"high",
         "movement":"low",
-        "useAiTagging":true
+        "useAiTagging":true,
+        "aiSchedule":true
       }'
 ```
 

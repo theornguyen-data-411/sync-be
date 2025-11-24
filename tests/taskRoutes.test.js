@@ -83,6 +83,41 @@ describe('Task API', () => {
     expect(listRes.body.items[0].tag).toBe('communicating');
   });
 
+  test('GET /api/tasks orders AI tasks before manual ones', async () => {
+    const aiTask = await request(app)
+      .post('/api/tasks')
+      .set('Authorization', authHeader)
+      .send({
+        description: 'Deep work session',
+        aiSchedule: true
+      });
+    expect(aiTask.status).toBe(201);
+
+    const manualTask = await request(app)
+      .post('/api/tasks')
+      .set('Authorization', authHeader)
+      .send({
+        description: 'Manual chore list',
+        aiSchedule: false,
+        focusLevel: 'low',
+        mentalLoad: 'low',
+        movement: 'low',
+        urgency: 'low',
+        tag: 'admin',
+        useAiTagging: false
+      });
+    expect(manualTask.status).toBe(201);
+
+    const listRes = await request(app)
+      .get('/api/tasks')
+      .set('Authorization', authHeader);
+
+    expect(listRes.status).toBe(200);
+    expect(listRes.body.count).toBe(2);
+    expect(listRes.body.items[0].aiSchedule).toBe(true);
+    expect(listRes.body.items[1].aiSchedule).toBe(false);
+  });
+
   test('POST /api/tasks/ai/preview returns scoring + tag', async () => {
     const previewRes = await request(app)
       .post('/api/tasks/ai/preview')
