@@ -126,12 +126,33 @@ exports.listTasks = async (req, res) => {
         if (date || from || to) {
             filter.date = {};
             if (date) {
-                const day = new Date(date);
+                // Parse date string and create UTC date range
+                // Handle both "YYYY-MM-DD" format and ISO strings
+                const dateStr = String(date).trim();
+                let day;
+                
+                // If it's in YYYY-MM-DD format, parse it as UTC
+                if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                    day = new Date(dateStr + 'T00:00:00.000Z');
+                } else {
+                    day = new Date(dateStr);
+                }
+                
                 if (!Number.isNaN(day.getTime())) {
-                    const start = new Date(day);
-                    start.setHours(0, 0, 0, 0);
-                    const end = new Date(day);
-                    end.setHours(23, 59, 59, 999);
+                    // Create start of day in UTC
+                    const start = new Date(Date.UTC(
+                        day.getUTCFullYear(),
+                        day.getUTCMonth(),
+                        day.getUTCDate(),
+                        0, 0, 0, 0
+                    ));
+                    // Create end of day in UTC
+                    const end = new Date(Date.UTC(
+                        day.getUTCFullYear(),
+                        day.getUTCMonth(),
+                        day.getUTCDate(),
+                        23, 59, 59, 999
+                    ));
                     filter.date.$gte = start;
                     filter.date.$lte = end;
                 }
@@ -145,7 +166,14 @@ exports.listTasks = async (req, res) => {
                 if (to) {
                     const toDate = new Date(to);
                     if (!Number.isNaN(toDate.getTime())) {
-                        filter.date.$lte = toDate;
+                        // Set to end of day in UTC for 'to' parameter
+                        const toEnd = new Date(Date.UTC(
+                            toDate.getUTCFullYear(),
+                            toDate.getUTCMonth(),
+                            toDate.getUTCDate(),
+                            23, 59, 59, 999
+                        ));
+                        filter.date.$lte = toEnd;
                     }
                 }
             }
