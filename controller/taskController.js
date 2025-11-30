@@ -67,7 +67,7 @@ exports.createTask = async (req, res) => {
             }
         }
 
-    const scoringResult = scoreTask({
+        const scoringResult = scoreTask({
             description,
             providedLevels,
             allowAi: useAiScoring ?? aiSchedule
@@ -130,14 +130,14 @@ exports.listTasks = async (req, res) => {
                 // Handle both "YYYY-MM-DD" format and ISO strings
                 const dateStr = String(date).trim();
                 let day;
-                
+
                 // If it's in YYYY-MM-DD format, parse it as UTC
                 if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
                     day = new Date(dateStr + 'T00:00:00.000Z');
                 } else {
                     day = new Date(dateStr);
                 }
-                
+
                 if (!Number.isNaN(day.getTime())) {
                     // Create start of day in UTC
                     const start = new Date(Date.UTC(
@@ -183,20 +183,20 @@ exports.listTasks = async (req, res) => {
             }
         }
 
-    const tasks = await Task.find(filter);
+        const tasks = await Task.find(filter);
 
-    const autoTasks = [];
-    const manualTasks = [];
+        const autoTasks = [];
+        const manualTasks = [];
 
-    for (const task of tasks) {
-      if (task.aiSchedule) {
-        autoTasks.push(task);
-      } else {
-        manualTasks.push(task);
-      }
-    }
+        for (const task of tasks) {
+            if (task.aiSchedule) {
+                autoTasks.push(task);
+            } else {
+                manualTasks.push(task);
+            }
+        }
 
-    autoTasks.sort((a, b) => {
+        autoTasks.sort((a, b) => {
             const zoneDiff =
                 (ZONE_SORT_WEIGHT[a.energyZone] ?? 99) -
                 (ZONE_SORT_WEIGHT[b.energyZone] ?? 99);
@@ -208,11 +208,11 @@ exports.listTasks = async (req, res) => {
             return b.updatedAt.getTime() - a.updatedAt.getTime();
         });
 
-    manualTasks.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+        manualTasks.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
-    const merged = [...autoTasks, ...manualTasks];
+        const merged = [...autoTasks, ...manualTasks];
 
-    res.json({ items: merged, count: merged.length });
+        res.json({ items: merged, count: merged.length });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -275,7 +275,7 @@ exports.updateTask = async (req, res) => {
             updates.subtasks = sanitizeSubtasks(req.body.subtasks);
         }
 
-    const userProvidedKeys = CRITERIA_KEYS.filter(key => key in req.body);
+        const userProvidedKeys = CRITERIA_KEYS.filter(key => key in req.body);
         const needsScoring =
             req.body.useAiScoring === true ||
             req.body.forceRecalculate === true ||
@@ -314,15 +314,15 @@ exports.updateTask = async (req, res) => {
             };
         }
 
-    if ('tag' in req.body || req.body.useAiTagging === true) {
-      const tagResult = classifyTaskTag({
-        description: updates.description ?? existingTask.description,
-        providedTag: req.body.tag,
-        allowAi: req.body.useAiTagging ?? req.body.useAiScoring ?? existingTask.aiSchedule
-      });
-      updates.tag = tagResult.tag;
-      updates.tagSource = tagResult.source;
-    }
+        if ('tag' in req.body || req.body.useAiTagging === true) {
+            const tagResult = classifyTaskTag({
+                description: updates.description ?? existingTask.description,
+                providedTag: req.body.tag,
+                allowAi: req.body.useAiTagging ?? req.body.useAiScoring ?? existingTask.aiSchedule
+            });
+            updates.tag = tagResult.tag;
+            updates.tagSource = tagResult.source;
+        }
 
         const updatedTask = await Task.findByIdAndUpdate(
             existingTask._id,
@@ -356,7 +356,7 @@ exports.deleteTask = async (req, res) => {
 
 exports.previewScore = async (req, res) => {
     try {
-    const { description, useAiScoring = true, useAiTagging = true, tag, ...levels } = req.body;
+        const { description, useAiScoring = true, useAiTagging = true, tag, ...levels } = req.body;
         const providedLevels = {};
         const userProvidedKeys = [];
         for (const key of CRITERIA_KEYS) {
@@ -372,17 +372,17 @@ exports.previewScore = async (req, res) => {
             allowAi: useAiScoring
         });
 
-    const tagResult = classifyTaskTag({
-      description,
-      providedTag: tag,
-      allowAi: useAiTagging
-    });
+        const tagResult = classifyTaskTag({
+            description,
+            providedTag: tag,
+            allowAi: useAiTagging
+        });
 
         res.json({
             ...scoringResult,
-      scoringSource: buildScoringSource(scoringResult.meta, userProvidedKeys),
-      tag: tagResult.tag,
-      tagSource: tagResult.source
+            scoringSource: buildScoringSource(scoringResult.meta, userProvidedKeys),
+            tag: tagResult.tag,
+            tagSource: tagResult.source
         });
     } catch (error) {
         res.status(400).json({ error: error.message });
