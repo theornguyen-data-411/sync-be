@@ -6,7 +6,7 @@
 
 const mongoose = require('mongoose');
 const Task = require('../model/Task');
-const { scoreTask, classifyTaskTag } = require('../services/taskScoringService');
+const { scoreTask, classifyTaskTag, normalizeLevel } = require('../services/taskScoringService');
 
 const CRITERIA_KEYS = ['focusLevel', 'mentalLoad', 'movement', 'urgency'];
 const ZONE_SORT_WEIGHT = { Peak: 0, Balance: 1, Low: 2 };
@@ -44,57 +44,125 @@ exports.createTask = async (req, res) => {
             date,
             startTime,
             endTime,
-            repeat,
+            repeat = null,
             note,
             subtasks,
             status = 'pending',
             useAiScoring,
             useAiTagging,
             tag: requestedTag,
+            enableEnergyRating = true,
+            locked = false,
             ...levels
         } = req.body;
 
-        if (!description) {
-            return res.status(400).json({ message: 'Task description is required.' });
+        // ========== REQUIRED FIELDS VALIDATION ==========
+        
+        // 1. Title (description) - Required
+        if (!description || !description.trim()) {
+            return res.status(400).json({ message: 'Task title (description) is required.' });
         }
 
+        // 2. Start Time & End Time - Required
+        if (!startTime || !startTime.trim()) {
+            return res.status(400).json({ message: 'Start time is required.' });
+        }
+        if (!endTime || !endTime.trim()) {
+            return res.status(400).json({ message: 'End time is required.' });
+        }
+
+        // 3. Energy Rating Fields - Required if enableEnergyRating is true
         const providedLevels = {};
         const userProvidedKeys = [];
-        for (const key of CRITERIA_KEYS) {
-            if (levels[key] !== undefined) {
+        
+        if (enableEnergyRating) {
+            // If energy rating is enabled, all rating fields are required
+            for (const key of CRITERIA_KEYS) {
+                if (levels[key] === undefined || levels[key] === null || levels[key] === '') {
+                    return res.status(400).json({ 
+                        message: `${key} is required when energy rating is enabled.` 
+                    });
+                }
                 providedLevels[key] = levels[key];
                 userProvidedKeys.push(key);
             }
+        } else {
+            // If energy rating is disabled, set all to 'low' as defaults
+            for (const key of CRITERIA_KEYS) {
+                providedLevels[key] = levels[key] !== undefined ? levels[key] : 'low';
+                if (levels[key] !== undefined) {
+                    userProvidedKeys.push(key);
+                }
+            }
         }
 
-        const scoringResult = scoreTask({
-            description,
-            providedLevels,
-            allowAi: useAiScoring ?? aiSchedule
-        });
+        // ========== PROCESSING ==========
 
-        const tagResult = classifyTaskTag({
-            description,
-            providedTag: requestedTag,
-            allowAi: useAiTagging ?? aiSchedule
-        });
+        // Calculate scoring only if energy rating is enabled
+        let scoringResult = null;
+        if (enableEnergyRating) {
+            scoringResult = scoreTask({
+                description,
+                providedLevels,
+                allowAi: useAiScoring ?? aiSchedule
+            });
+        } else {
+            // If energy rating is disabled, still need to normalize levels for model requirements
+            // but don't calculate energy metrics
+            scoringResult = {
+                normalizedLevels: {},
+                rawScore: null,
+                manaCost: null,
+                energyZone: null,
+                meta: {
+                    autoFilled: {},
+                    aiUsed: false,
+                    evaluatedAt: new Date().toISOString()
+                }
+            };
+            for (const key of CRITERIA_KEYS) {
+                scoringResult.normalizedLevels[key] = normalizeLevel(providedLevels[key], 'low');
+                scoringResult.meta.autoFilled[key] = false;
+            }
+        }
 
+        // Tag classification (optional field)
+        let tagResult;
+        try {
+            tagResult = classifyTaskTag({
+                description,
+                providedTag: requestedTag,
+                allowAi: useAiTagging ?? aiSchedule
+            });
+        } catch (tagError) {
+            // If tag is not provided and AI tagging is disabled, use default
+            tagResult = {
+                tag: 'admin',
+                source: 'manual'
+            };
+        }
+
+        // ========== CREATE TASK ==========
         const task = await Task.create({
             user: req.userId,
-            description,
+            description: description.trim(),
             aiSchedule,
             date: parseDate(date),
-            startTime,
-            endTime,
-            repeat,
-            note,
+            startTime: startTime.trim(),
+            endTime: endTime.trim(),
+            repeat: repeat || null, // Default to null (Does not repeat)
+            note: note ? note.trim() : undefined,
             status,
             subtasks: sanitizeSubtasks(subtasks),
+            locked: Boolean(locked), // Default to false
+            enableEnergyRating: Boolean(enableEnergyRating), // Default to true
             ...scoringResult.normalizedLevels,
             rawScore: scoringResult.rawScore,
             manaCost: scoringResult.manaCost,
             energyZone: scoringResult.energyZone,
-            scoringSource: buildScoringSource(scoringResult.meta, userProvidedKeys),
+            scoringSource: enableEnergyRating 
+                ? buildScoringSource(scoringResult.meta, userProvidedKeys)
+                : 'manual',
             scoringDetails: {
                 autoFilled: scoringResult.meta.autoFilled,
                 evaluatedAt: scoringResult.meta.evaluatedAt
@@ -258,7 +326,9 @@ exports.updateTask = async (req, res) => {
             'tag',
             'repeat',
             'note',
-            'status'
+            'status',
+            'locked',
+            'enableEnergyRating'
         ];
 
         for (const field of mutableFields) {
@@ -388,4 +458,5 @@ exports.previewScore = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
+
 

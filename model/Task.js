@@ -122,6 +122,14 @@ const TaskSchema = new mongoose.Schema(
       type: String,
       enum: ['pending', 'in_progress', 'completed', 'cancelled'],
       default: 'pending'
+    },
+    locked: {
+      type: Boolean,
+      default: false
+    },
+    enableEnergyRating: {
+      type: Boolean,
+      default: true
     }
   },
   { timestamps: true }

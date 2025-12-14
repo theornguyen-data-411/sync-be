@@ -34,7 +34,27 @@ curl -X POST https://sync-be-f8rn.onrender.com/api/auth/logout \
 
 ---
 
-## 5. Create Task (AI scoring + tag AI optional)
+## 5. Create Task
+
+### 5.1. Tạo Task với Energy Rating (Bắt buộc các rating fields)
+
+**Required fields:**
+- `description` (Title): Bắt buộc
+- `startTime`: Bắt buộc
+- `endTime`: Bắt buộc
+- `focusLevel`: Bắt buộc (low/medium/high)
+- `mentalLoad`: Bắt buộc (low/medium/high)
+- `movement`: Bắt buộc (low/medium/high)
+- `urgency`: Bắt buộc (low/medium/high)
+
+**Optional fields:**
+- `date`: Mặc định là ngày đang chọn (Planning Tab)
+- `enableEnergyRating`: Mặc định `true`
+- `tag`: Optional (deep_work/admin/communicating/learning)
+- `repeat`: Mặc định `null` (Does not repeat)
+- `note`: Optional
+- `subtasks`: Optional
+- `locked`: Mặc định `false`
 
 ```bash
 curl -X POST https://sync-be-f8rn.onrender.com/api/tasks \
@@ -42,19 +62,75 @@ curl -X POST https://sync-be-f8rn.onrender.com/api/tasks \
   -H "Content-Type: application/json" \
   -d '{
         "description":"Prepare quarterly finance report",
-        "aiSchedule":true,
-        "date":"2025-01-01",
         "startTime":"09:00",
         "endTime":"11:00",
+        "focusLevel":"high",
+        "mentalLoad":"high",
+        "movement":"low",
+        "urgency":"high",
+        "date":"2025-01-01",
         "tag":"deep_work",
-        "useAiTagging":false,
         "note":"Need draft for leadership sync",
         "subtasks":[
           {"title":"Collect data"},
           {"title":"Create slides"}
-        ]
+        ],
+        "enableEnergyRating":true,
+        "locked":false
       }'
 ```
+
+### 5.2. Tạo Task với Energy Rating OFF (Rating fields sẽ được set default = "low")
+
+```bash
+curl -X POST https://sync-be-f8rn.onrender.com/api/tasks \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "description":"Quick email check",
+        "startTime":"10:00",
+        "endTime":"10:30",
+        "enableEnergyRating":false,
+        "date":"2025-01-01",
+        "note":"Check inbox and respond to urgent emails"
+      }'
+```
+
+### 5.3. Tạo Task tối thiểu (chỉ các trường bắt buộc)
+
+```bash
+curl -X POST https://sync-be-f8rn.onrender.com/api/tasks \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "description":"Team meeting",
+        "startTime":"14:00",
+        "endTime":"15:00",
+        "focusLevel":"medium",
+        "mentalLoad":"medium",
+        "movement":"low",
+        "urgency":"medium"
+      }'
+```
+
+### 5.4. Tạo Task với AI Scoring (tự động tính rating nếu không cung cấp)
+
+```bash
+curl -X POST https://sync-be-f8rn.onrender.com/api/tasks \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "description":"Deep work on architecture design",
+        "startTime":"09:00",
+        "endTime":"12:00",
+        "focusLevel":"high",
+        "useAiScoring":true,
+        "useAiTagging":true,
+        "date":"2025-01-01"
+      }'
+```
+
+**Lưu ý:** Khi `enableEnergyRating=true` (mặc định), bạn **phải** cung cấp đầy đủ 4 rating fields (focusLevel, mentalLoad, movement, urgency). Nếu không, API sẽ trả về lỗi 400.
 
 ## 6. List Tasks (Filter + hiểu rõ aiSchedule)
 
