@@ -10,6 +10,7 @@ const { scoreTask, classifyTaskTag, normalizeLevel } = require('../services/task
 
 const CRITERIA_KEYS = ['focusLevel', 'mentalLoad', 'movement', 'urgency'];
 const ZONE_SORT_WEIGHT = { Peak: 0, Balance: 1, Low: 2 };
+const SUBTASK_TEMPLATES_LIMIT = 50;
 
 function sanitizeSubtasks(subtasks = []) {
     if (!Array.isArray(subtasks)) {
@@ -456,6 +457,83 @@ exports.previewScore = async (req, res) => {
         });
     } catch (error) {
         res.status(400).json({ error: error.message });
+    }
+};
+
+/**
+ * List reusable subtask templates for the current user.
+ *
+ * Use case:
+ * - When user is on the "Create task" screen and opens the subtask dropdown,
+ *   FE calls this endpoint to fetch a list of past subtask titles to reuse.
+ *
+ * Query params:
+ * - q (optional): search keyword to filter subtask titles.
+ *
+ * Response:
+ * {
+ *   items: [
+ *     { title: "Prepare slides", lastUsedAt: "2025-01-01T00:00:00.000Z", usageCount: 3 },
+ *     ...
+ *   ]
+ * }
+ */
+exports.listSubtaskTemplates = async (req, res) => {
+    try {
+        const { q } = req.query;
+
+        const matchStage = {
+            user: new mongoose.Types.ObjectId(req.userId),
+            'subtasks.title': { $exists: true, $ne: '' }
+        };
+
+        const pipeline = [
+            { $match: matchStage },
+            { $unwind: '$subtasks' }
+        ];
+
+        if (q && q.trim()) {
+            pipeline.push({
+                $match: {
+                    'subtasks.title': {
+                        $regex: q.trim(),
+                        $options: 'i'
+                    }
+                }
+            });
+        }
+
+        pipeline.push(
+            {
+                $group: {
+                    _id: {
+                        title: '$subtasks.title'
+                    },
+                    lastUsedAt: { $max: '$updatedAt' },
+                    usageCount: { $sum: 1 }
+                }
+            },
+            {
+                $sort: {
+                    lastUsedAt: -1
+                }
+            },
+            {
+                $limit: SUBTASK_TEMPLATES_LIMIT
+            }
+        );
+
+        const results = await Task.aggregate(pipeline);
+
+        const items = results.map(item => ({
+            title: item._id.title,
+            lastUsedAt: item.lastUsedAt,
+            usageCount: item.usageCount
+        }));
+
+        res.json({ items, count: items.length });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 };
 

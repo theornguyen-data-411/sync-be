@@ -187,4 +187,51 @@ curl -X POST https://sync-be-f8rn.onrender.com/api/tasks/ai/preview \
       }'
 ```
 
+## 11. Subtask Templates (Tái sử dụng subtask cũ khi tạo task mới)
+
+API này dùng cho màn **Create Task**: khi người dùng mở phần Subtask (dropdown / sheet), FE gọi để lấy danh sách subtask đã dùng trước đó của **chính user hiện tại**.
+
+### 11.1. Lấy danh sách subtask templates
+
+**Mặc định**: trả về tối đa 50 subtask khác nhau, sort theo thời gian sử dụng gần nhất.
+
+```bash
+curl "https://sync-be-f8rn.onrender.com/api/tasks/subtasks/templates" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+**Response ví dụ:**
+
+```json
+{
+  "items": [
+    {
+      "title": "Check email",
+      "lastUsedAt": "2025-01-01T10:00:00.000Z",
+      "usageCount": 5
+    },
+    {
+      "title": "Prepare slides",
+      "lastUsedAt": "2025-01-02T09:00:00.000Z",
+      "usageCount": 3
+    }
+  ],
+  "count": 2
+}
+```
+
+### 11.2. Search theo keyword (cho ô search trong dropdown)
+
+Thêm query param `q` để filter theo `title` (không phân biệt hoa thường):
+
+```bash
+curl "https://sync-be-f8rn.onrender.com/api/tasks/subtasks/templates?q=email" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+**Gợi ý dùng ở FE:**
+- Khi user mở phần Subtask: gọi API ở 11.1 để hiển thị list gợi ý.
+- Khi user gõ text trong ô search: debounce và gọi lại API với `q=...`.
+- Khi user chọn 1 item: map thành `{ "title": "<title>" }` và đưa vào mảng `subtasks` trong body `POST /api/tasks`.
+
 
